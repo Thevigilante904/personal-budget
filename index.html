@@ -125,6 +125,12 @@
 </head>
 <body>
     <h1>Personal Budget Tracker</h1>
+
+    <label for="currency">Choose currency:</label>
+    <select id="currency" onchange="convertCurrency()">
+        <option value="usd">USD</option>
+        <option value="jpy">JPY</option>
+    </select>
     
     <div class="container">
         <h2>Add Transaction</h2>
@@ -360,5 +366,20 @@
         // Initial UI update
         updateUI();
     </script>
+    <script>
+    function convertCurrency() {
+        const exchangeRate = 150; // Example: 1 USD = 150 JPY
+        const currency = document.getElementById("currency").value;
+        const budgetElement = document.getElementById("budget");
+        const usdValue = parseFloat(budgetElement.getAttribute("data-usd"));
+
+        if (currency === "jpy") {
+            budgetElement.innerText = `¥${(usdValue * exchangeRate).toLocaleString()}`;
+        } else {
+            budgetElement.innerText = `$${usdValue}`;
+        }
+    }
+</script>
+
 </body>
 </html>
