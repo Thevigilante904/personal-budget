@@ -7,6 +7,16 @@ const EXCHANGE_RATES = {
 // State Management
 let currentCurrency = 'USD';
 let currentTab = 'main';
+let monthlyBudget = (() => {
+    try {
+        const stored = localStorage.getItem('monthlyBudget');
+        return stored ? JSON.parse(stored) : null;
+    } catch (e) {
+        console.error('Error loading monthly budget:', e);
+        return null;
+    }
+})();
+
 let transactions = (() => {
     try {
         const stored = localStorage.getItem('budgetTransactions');
@@ -453,35 +463,30 @@ const uiManager = {
         elements.goalsList.innerHTML = '';
         const currentMonth = new Date().toISOString().substring(0, 7);
         
-        Object.entries(budgetGoals).forEach(([category, goal]) => {
-            const goalAmount = utils.convertAmount(goal.amount, goal.currency, currentCurrency);
+        if (monthlyBudget) {
+            const goalAmount = utils.convertAmount(monthlyBudget.amount, monthlyBudget.currency, currentCurrency);
             
             const spending = transactions
-                .filter(t => t.category === category && t.date.startsWith(currentMonth) && t.type === 'expense')
+                .filter(t => t.date.startsWith(currentMonth) && t.type === 'expense')
                 .reduce((sum, t) => sum + utils.convertAmount(t.amount, t.currency || 'USD', currentCurrency), 0);
             
             const percentage = (spending / goalAmount) * 100;
-            const formattedCategory = category
-                .replace(/-/g, ' ')
-                .split(' ')
-                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                .join(' ');
 
             const goalItem = document.createElement('div');
             goalItem.className = 'goal-item';
             goalItem.innerHTML = `
                 <div>
-                    <strong>${formattedCategory}</strong><br>
+                    <strong>Monthly Budget</strong><br>
                     ${utils.formatCurrency(spending)} / ${utils.formatCurrency(goalAmount)}
                 </div>
                 <div class="goal-progress">
                     <div class="goal-bar ${percentage >= 90 ? 'goal-warning' : ''}" 
                          style="width: ${Math.min(percentage, 100)}%"></div>
                 </div>
-                <button class="delete-btn" onclick="budgetManager.deleteBudgetGoal('${category}')">×</button>
+                <button class="delete-btn" onclick="deleteBudgetGoal()">×</button>
             `;
             elements.goalsList.appendChild(goalItem);
-        });
+        }
     },
 
     updateRecurringList() {
@@ -620,6 +625,37 @@ function initializeEventListeners() {
             reader.readAsText(file);
         });
     }
+
+    // Budget goal form submission
+    if (elements.goalForm) {
+        elements.goalForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const amount = parseFloat(document.getElementById('goal-amount').value);
+            
+            if (isNaN(amount) || amount <= 0) {
+                utils.showToast('Please enter a valid amount');
+                return;
+            }
+
+            monthlyBudget = {
+                amount: amount,
+                currency: currentCurrency
+            };
+
+            localStorage.setItem('monthlyBudget', JSON.stringify(monthlyBudget));
+            uiManager.updateBudgetGoals();
+            utils.showToast('Monthly budget goal has been set');
+            elements.goalForm.reset();
+        });
+    }
+}
+
+// Add delete budget goal function
+function deleteBudgetGoal() {
+    monthlyBudget = null;
+    localStorage.removeItem('monthlyBudget');
+    uiManager.updateBudgetGoals();
+    utils.showToast('Monthly budget goal has been removed');
 }
 
 // Initialize the application
