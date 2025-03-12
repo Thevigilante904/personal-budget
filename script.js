@@ -339,55 +339,88 @@ const uiManager = {
             const monthTransactions = transactions.filter(t => t.date.startsWith(month));
             const income = monthTransactions
                 .filter(t => t.type === 'income')
-                .reduce((sum, t) => sum + utils.convertAmount(t.amount, t.currency || 'USD', currentCurrency), 0);
+                .reduce((sum, t) => sum + utils.convertAmount(t.amount, t.currency || currentCurrency, currentCurrency), 0);
             const expenses = monthTransactions
                 .filter(t => t.type === 'expense')
-                .reduce((sum, t) => sum + utils.convertAmount(t.amount, t.currency || 'USD', currentCurrency), 0);
+                .reduce((sum, t) => sum + utils.convertAmount(t.amount, t.currency || currentCurrency, currentCurrency), 0);
             return { month, income, expenses };
         });
 
         // Create monthly income/expense chart
-        const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
-        if (window.monthlyChart) window.monthlyChart.destroy();
+        const monthlyCtx = document.getElementById('monthlyChart');
+        if (!monthlyCtx) return;
+
+        if (window.monthlyChart) {
+            window.monthlyChart.destroy();
+        }
+
+        const monthLabels = monthlyData.map(d => {
+            const [year, month] = d.month.split('-');
+            return new Date(year, month - 1).toLocaleDateString(undefined, { month: 'short', year: '2-digit' });
+        });
+
         window.monthlyChart = new Chart(monthlyCtx, {
             type: 'bar',
             data: {
-                labels: monthlyData.map(d => {
-                    const [year, month] = d.month.split('-');
-                    return new Date(year, month - 1).toLocaleDateString(undefined, { month: 'short' });
-                }),
+                labels: monthLabels,
                 datasets: [
                     {
                         label: 'Income',
                         data: monthlyData.map(d => d.income),
                         backgroundColor: 'rgba(46, 204, 113, 0.5)',
                         borderColor: 'rgba(46, 204, 113, 1)',
-                        borderWidth: 1
+                        borderWidth: 1,
+                        borderRadius: 4
                     },
                     {
                         label: 'Expenses',
                         data: monthlyData.map(d => d.expenses),
                         backgroundColor: 'rgba(231, 76, 60, 0.5)',
                         borderColor: 'rgba(231, 76, 60, 1)',
-                        borderWidth: 1
+                        borderWidth: 1,
+                        borderRadius: 4
                     }
                 ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
                 scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    },
                     y: {
                         beginAtZero: true,
                         ticks: {
                             callback: value => utils.formatCurrency(value)
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
                         }
                     }
                 },
                 plugins: {
                     title: {
                         display: true,
-                        text: 'Monthly Income vs Expenses'
+                        text: 'Monthly Income vs Expenses',
+                        font: {
+                            size: 16,
+                            weight: 'bold'
+                        },
+                        padding: 20
+                    },
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20
+                        }
                     },
                     tooltip: {
                         callbacks: {
@@ -407,23 +440,30 @@ const uiManager = {
         const categoryTotals = transactions
             .filter(t => t.date.startsWith(currentMonth) && t.type === 'expense')
             .reduce((acc, t) => {
-                const amount = utils.convertAmount(t.amount, t.currency || 'USD', currentCurrency);
+                const amount = utils.convertAmount(t.amount, t.currency || currentCurrency, currentCurrency);
                 acc[t.category] = (acc[t.category] || 0) + amount;
                 return acc;
             }, {});
 
         // Create category breakdown chart
-        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-        if (window.categoryChart) window.categoryChart.destroy();
+        const categoryCtx = document.getElementById('categoryChart');
+        if (!categoryCtx) return;
+
+        if (window.categoryChart) {
+            window.categoryChart.destroy();
+        }
+
+        const categoryLabels = Object.keys(categoryTotals).map(cat => 
+            cat.replace(/-/g, ' ')
+               .split(' ')
+               .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+               .join(' ')
+        );
+
         window.categoryChart = new Chart(categoryCtx, {
             type: 'doughnut',
             data: {
-                labels: Object.keys(categoryTotals).map(cat => 
-                    cat.replace(/-/g, ' ')
-                       .split(' ')
-                       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                       .join(' ')
-                ),
+                labels: categoryLabels,
                 datasets: [{
                     data: Object.values(categoryTotals),
                     backgroundColor: [
@@ -434,16 +474,30 @@ const uiManager = {
                         'rgba(241, 196, 15, 0.8)',
                         'rgba(230, 126, 34, 0.8)',
                         'rgba(231, 76, 60, 0.8)'
-                    ]
+                    ],
+                    borderWidth: 1,
+                    borderColor: 'rgba(255, 255, 255, 0.5)'
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                cutout: '70%',
                 plugins: {
                     title: {
                         display: true,
-                        text: 'Current Month Expenses by Category'
+                        text: 'Current Month Expenses by Category',
+                        font: {
+                            size: 16,
+                            weight: 'bold'
+                        },
+                        padding: 20
+                    },
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20
+                        }
                     },
                     tooltip: {
                         callbacks: {
