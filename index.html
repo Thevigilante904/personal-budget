@@ -487,6 +487,154 @@
         .tab-content.active {
             display: block;
         }
+
+        /* Add new styles for inner tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-color);
+            background: transparent;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            color: var(--primary-color);
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -12px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--primary-color);
+        }
+
+        .tab-section {
+            display: none;
+        }
+
+        .tab-section.active {
+            display: block;
+        }
+
+        /* Goal item styles */
+        .goal-item {
+            background: var(--container-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .goal-progress {
+            margin-top: 10px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+            height: 8px;
+            overflow: hidden;
+        }
+
+        .goal-bar {
+            height: 100%;
+            background-color: var(--primary-color);
+            transition: width 0.3s ease;
+        }
+
+        .goal-bar.goal-warning {
+            background-color: var(--danger-color);
+        }
+
+        /* Recurring transaction styles */
+        .recurring-list {
+            margin-top: 2rem;
+        }
+
+        .recurring-transaction {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .recurring-info {
+            flex: 1;
+        }
+
+        .recurring-info h4 {
+            margin: 0 0 0.5rem 0;
+            color: #333;
+        }
+
+        .recurring-details {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .recurring-amount {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .recurring-amount.income {
+            color: #28a745;
+        }
+
+        .recurring-amount.expense {
+            color: #dc3545;
+        }
+
+        .recurring-badge {
+            background: #e9ecef;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #495057;
+        }
+
+        .recurring-category {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+
+        .recurring-dates {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+
+        .recurring-controls {
+            margin-left: 1rem;
+        }
+
+        .empty-message {
+            text-align: center;
+            color: #6c757d;
+            padding: 2rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
     </style>
 </head>
 <body>
@@ -650,51 +798,61 @@
                 <div class="budget-goals" id="goals-list"></div>
             </div>
 
-            <div id="recurring-section" style="display: none;">
-                <h2>Recurring Transactions</h2>
-                <form id="recurring-form">
-                    <div class="form-group">
-                        <label for="recurring-description">Description</label>
-                        <input type="text" id="recurring-description" required placeholder="Enter description">
+            <div id="recurring-section" class="tab-section">
+                <h3>Recurring Transactions</h3>
+                <form id="recurring-form" class="form-group">
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label for="recurring-description">Description</label>
+                            <input type="text" id="recurring-description" required>
+                        </div>
+                        <div class="form-field">
+                            <label for="recurring-amount">Amount</label>
+                            <input type="number" id="recurring-amount" step="0.01" required>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="recurring-amount">Amount</label>
-                        <input type="number" id="recurring-amount" min="0" step="0.01" required placeholder="Enter amount">
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label for="recurring-type">Type</label>
+                            <select id="recurring-type" required>
+                                <option value="expense">Expense</option>
+                                <option value="income">Income</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label for="recurring-category">Category</label>
+                            <select id="recurring-category" required>
+                                <option value="food">Food</option>
+                                <option value="transportation">Transportation</option>
+                                <option value="utilities">Utilities</option>
+                                <option value="entertainment">Entertainment</option>
+                                <option value="shopping">Shopping</option>
+                                <option value="health">Health</option>
+                                <option value="salary">Salary</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="recurring-type">Type</label>
-                        <select id="recurring-type" required>
-                            <option value="income">Income</option>
-                            <option value="expense">Expense</option>
-                        </select>
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label for="recurring-frequency">Frequency</label>
+                            <select id="recurring-frequency" required>
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
+                                <option value="yearly">Yearly</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label for="recurring-start">Start Date</label>
+                            <input type="date" id="recurring-start" required>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="recurring-category">Category</label>
-                        <select id="recurring-category" required>
-                            <option value="salary">Salary</option>
-                            <option value="food">Food & Dining</option>
-                            <option value="transportation">Transportation</option>
-                            <option value="utilities">Utilities</option>
-                            <option value="entertainment">Entertainment</option>
-                            <option value="housing">Housing</option>
-                            <option value="other">Other</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="recurring-frequency">Frequency</label>
-                        <select id="recurring-frequency" required>
-                            <option value="monthly">Monthly</option>
-                            <option value="weekly">Weekly</option>
-                            <option value="yearly">Yearly</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="recurring-start">Start Date</label>
-                        <input type="date" id="recurring-start" required>
-                    </div>
-                    <button type="submit">Add Recurring Transaction</button>
+                    <button type="submit" class="btn btn-primary">Add Recurring Transaction</button>
                 </form>
-                <div id="recurring-list"></div>
+
+                <div id="recurring-list" class="recurring-list">
+                    <!-- Recurring transactions will be added here dynamically -->
+                </div>
             </div>
         </div>
     </div>
