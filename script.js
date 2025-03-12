@@ -6,6 +6,7 @@ const EXCHANGE_RATES = {
 
 // State Management
 let currentCurrency = 'USD';
+let currentTab = 'main';
 let transactions = (() => {
     try {
         const stored = localStorage.getItem('budgetTransactions');
@@ -46,7 +47,32 @@ const elements = {
     goalForm: document.getElementById('goal-form'),
     recurringForm: document.getElementById('recurring-form'),
     goalsList: document.getElementById('goals-list'),
-    recurringList: document.getElementById('recurring-list')
+    recurringList: document.getElementById('recurring-list'),
+    navTabs: document.querySelectorAll('.nav-tab'),
+    tabContents: document.querySelectorAll('.tab-content'),
+};
+
+// Navigation Management
+const navigationManager = {
+    switchTab(tabId) {
+        // Remove active class from all tabs and contents
+        elements.navTabs.forEach(tab => tab.classList.remove('active'));
+        elements.tabContents.forEach(content => content.classList.remove('active'));
+
+        // Add active class to selected tab and content
+        document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
+        document.getElementById(`${tabId}-tab`).classList.add('active');
+
+        // Update UI based on tab
+        if (tabId === 'management') {
+            uiManager.updateMonthlyView();
+        } else if (tabId === 'budget') {
+            uiManager.updateBudgetGoals();
+            uiManager.updateRecurringList();
+        }
+
+        currentTab = tabId;
+    }
 };
 
 // Utility Functions
@@ -178,10 +204,12 @@ const uiManager = {
                 this.updateFilterOptions();
                 this.updateTransactionsTable(filteredTransactions);
                 this.updateSummary(filteredTransactions);
-                this.updateBudgetGoals();
-                this.updateRecurringList();
-                
-                if (elements.monthlyContainer.style.display !== 'none') {
+
+                // Only update specific sections based on current tab
+                if (currentTab === 'budget') {
+                    this.updateBudgetGoals();
+                    this.updateRecurringList();
+                } else if (currentTab === 'management') {
                     this.updateMonthlyView();
                 }
             }, 0);
@@ -270,6 +298,13 @@ const uiManager = {
         elements.balanceEl.textContent = utils.formatCurrency(balance);
         elements.balanceEl.style.color = `var(${balance >= 0 ? '--success-color' : '--danger-color'})`;
         elements.amountInput.placeholder = `Enter amount (${currentCurrency})`;
+    },
+
+    updateMonthlyView() {
+        if (!elements.monthlyView) return;
+        
+        // Add your monthly view update logic here
+        // This should include your Chart.js implementation
     },
 
     updateBudgetGoals() {
@@ -397,6 +432,54 @@ function initializeEventListeners() {
             elements.categorySelect.appendChild(option);
         });
     });
+
+    // Navigation tabs
+    elements.navTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const tabId = tab.getAttribute('data-tab');
+            navigationManager.switchTab(tabId);
+        });
+    });
+
+    // Export/Import buttons
+    if (elements.exportBtn) {
+        elements.exportBtn.addEventListener('click', () => {
+            const dataStr = JSON.stringify(transactions);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = `budget_data_${new Date().toISOString().split('T')[0]}.json`;
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+        });
+    }
+
+    if (elements.importBtn && elements.importFile) {
+        elements.importBtn.addEventListener('click', () => {
+            elements.importFile.click();
+        });
+
+        elements.importFile.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    transactions = importedData;
+                    utils.updateLocalStorage();
+                    uiManager.updateUI();
+                    utils.showToast('Data imported successfully');
+                } catch (error) {
+                    utils.showToast('Error importing data. Please check the file format.');
+                }
+            };
+            reader.readAsText(file);
+        });
+    }
 }
 
 // Initialize the application
