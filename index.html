@@ -418,183 +418,120 @@
             display: flex;
             gap: 10px;
         }
+
+        /* Add new styles for navigation tabs */
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .nav-tab {
+            padding: 10px 20px;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-color);
+            background: transparent;
+            border: none;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tab.active {
+            color: var(--primary-color);
+        }
+
+        .nav-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -12px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
     </style>
 </head>
 <body>
     <h1>Personal Budget Tracker</h1>
     
-    <div class="container">
-        <div class="currency-switch">
-            <span class="currency-label">USD</span>
-            <label class="switch">
-                <input type="checkbox" id="currency-toggle">
-                <span class="slider"></span>
-            </label>
-            <span class="currency-label">JPY</span>
-            <span class="current-currency" id="current-currency">Current: USD</span>
-        </div>
-
-        <div class="toolbar">
-            <button id="export-btn">Export Data</button>
-            <button id="import-btn">Import Data</button>
-            <input type="file" id="import-file" class="file-input" accept=".json">
-            <button id="view-monthly">Monthly View</button>
-            <button id="view-transactions" style="display: none;">Transaction View</button>
-        </div>
-
-        <div class="search-filter">
-            <input type="text" id="search" placeholder="Search transactions...">
-            <select id="filter-type">
-                <option value="all">All Types</option>
-                <option value="income">Income</option>
-                <option value="expense">Expense</option>
-            </select>
-            <select id="filter-category">
-                <option value="all">All Categories</option>
-            </select>
-            <input type="month" id="filter-month">
-        </div>
+    <div class="nav-tabs">
+        <button class="nav-tab active" data-tab="main">Dashboard</button>
+        <button class="nav-tab" data-tab="management">Data Management</button>
+        <button class="nav-tab" data-tab="budget">Budget Planning</button>
     </div>
-    
-    <div class="container">
-        <h2>Add Transaction</h2>
-        <form id="transaction-form" novalidate>
-            <div class="form-group">
-                <label for="description">Description</label>
-                <input type="text" id="description" placeholder="What was this transaction for?" required>
-                <div class="error-message">Please enter a description</div>
+
+    <div id="main-tab" class="tab-content active">
+        <div class="container">
+            <div class="currency-switch">
+                <span class="currency-label">USD</span>
+                <label class="switch">
+                    <input type="checkbox" id="currency-toggle">
+                    <span class="slider"></span>
+                </label>
+                <span class="currency-label">JPY</span>
+                <span class="current-currency" id="current-currency">Current: USD</span>
             </div>
-            
-            <div class="form-group">
-                <label for="amount">Amount ($)</label>
-                <input type="number" id="amount" placeholder="Enter amount" min="0.01" step="0.01" required>
-                <div class="error-message">Please enter a valid amount greater than 0</div>
+
+            <div class="toolbar">
+                <button id="export-btn">Export Data</button>
+                <button id="import-btn">Import Data</button>
+                <input type="file" id="import-file" class="file-input" accept=".json">
+                <button id="view-monthly">Monthly View</button>
+                <button id="view-transactions" style="display: none;">Transaction View</button>
             </div>
-            
-            <div class="form-group">
-                <label for="type">Type</label>
-                <select id="type" required>
+
+            <div class="search-filter">
+                <input type="text" id="search" placeholder="Search transactions...">
+                <select id="filter-type">
+                    <option value="all">All Types</option>
                     <option value="income">Income</option>
                     <option value="expense">Expense</option>
                 </select>
-            </div>
-            
-            <div class="form-group">
-                <label for="category">Category</label>
-                <select id="category" required>
-                    <option value="salary">Salary</option>
-                    <option value="food">Food & Dining</option>
-                    <option value="transportation">Transportation</option>
-                    <option value="utilities">Utilities</option>
-                    <option value="entertainment">Entertainment</option>
-                    <option value="housing">Housing</option>
-                    <option value="other">Other</option>
+                <select id="filter-category">
+                    <option value="all">All Categories</option>
                 </select>
-            </div>
-            
-            <div class="form-group">
-                <label for="date">Date</label>
-                <input type="date" id="date" required>
-                <div class="error-message">Please select a date</div>
-            </div>
-            
-            <button type="submit" id="add-btn">Add Transaction</button>
-        </form>
-    </div>
-    
-    <div class="container">
-        <h2>Summary</h2>
-        <div class="summary">
-            <div class="summary-item income">
-                <h3>Income</h3>
-                <p id="total-income">$0.00</p>
-            </div>
-            <div class="summary-item expense">
-                <h3>Expenses</h3>
-                <p id="total-expenses">$0.00</p>
-            </div>
-            <div class="summary-item balance">
-                <h3>Balance</h3>
-                <p id="balance">$0.00</p>
+                <input type="month" id="filter-month">
             </div>
         </div>
-    </div>
-    
-    <div class="container">
-        <h2>Transactions</h2>
-        <div class="table-container">
-            <table id="transactions-table">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Description</th>
-                        <th>Category</th>
-                        <th>Type</th>
-                        <th>Amount</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="transactions-body"></tbody>
-            </table>
-        </div>
-    </div>
-
-    <div class="container" id="monthly-container" style="display: none;">
-        <h2>Monthly Overview</h2>
-        <div class="monthly-view" id="monthly-view"></div>
-    </div>
-
-    <div class="container">
-        <div class="tabs">
-            <div class="tab active" data-tab="budget-goals">Budget Goals</div>
-            <div class="tab" data-tab="recurring">Recurring Transactions</div>
-        </div>
-
-        <div id="budget-goals-section">
-            <h2>Budget Goals</h2>
-            <form id="goal-form">
+        
+        <div class="container">
+            <h2>Add Transaction</h2>
+            <form id="transaction-form" novalidate>
                 <div class="form-group">
-                    <label for="goal-category">Category</label>
-                    <select id="goal-category" required>
-                        <option value="food">Food & Dining</option>
-                        <option value="transportation">Transportation</option>
-                        <option value="utilities">Utilities</option>
-                        <option value="entertainment">Entertainment</option>
-                        <option value="housing">Housing</option>
-                        <option value="shopping">Shopping</option>
-                        <option value="other">Other</option>
-                    </select>
+                    <label for="description">Description</label>
+                    <input type="text" id="description" placeholder="What was this transaction for?" required>
+                    <div class="error-message">Please enter a description</div>
                 </div>
+                
                 <div class="form-group">
-                    <label for="goal-amount">Monthly Limit</label>
-                    <input type="number" id="goal-amount" min="0" step="0.01" required placeholder="Enter monthly limit">
+                    <label for="amount">Amount ($)</label>
+                    <input type="number" id="amount" placeholder="Enter amount" min="0.01" step="0.01" required>
+                    <div class="error-message">Please enter a valid amount greater than 0</div>
                 </div>
-                <button type="submit">Set Budget Goal</button>
-            </form>
-            <div class="budget-goals" id="goals-list"></div>
-        </div>
-
-        <div id="recurring-section" style="display: none;">
-            <h2>Recurring Transactions</h2>
-            <form id="recurring-form">
+                
                 <div class="form-group">
-                    <label for="recurring-description">Description</label>
-                    <input type="text" id="recurring-description" required placeholder="Enter description">
-                </div>
-                <div class="form-group">
-                    <label for="recurring-amount">Amount</label>
-                    <input type="number" id="recurring-amount" min="0" step="0.01" required placeholder="Enter amount">
-                </div>
-                <div class="form-group">
-                    <label for="recurring-type">Type</label>
-                    <select id="recurring-type" required>
+                    <label for="type">Type</label>
+                    <select id="type" required>
                         <option value="income">Income</option>
                         <option value="expense">Expense</option>
                     </select>
                 </div>
+                
                 <div class="form-group">
-                    <label for="recurring-category">Category</label>
-                    <select id="recurring-category" required>
+                    <label for="category">Category</label>
+                    <select id="category" required>
                         <option value="salary">Salary</option>
                         <option value="food">Food & Dining</option>
                         <option value="transportation">Transportation</option>
@@ -604,21 +541,147 @@
                         <option value="other">Other</option>
                     </select>
                 </div>
+                
                 <div class="form-group">
-                    <label for="recurring-frequency">Frequency</label>
-                    <select id="recurring-frequency" required>
-                        <option value="monthly">Monthly</option>
-                        <option value="weekly">Weekly</option>
-                        <option value="yearly">Yearly</option>
-                    </select>
+                    <label for="date">Date</label>
+                    <input type="date" id="date" required>
+                    <div class="error-message">Please select a date</div>
                 </div>
-                <div class="form-group">
-                    <label for="recurring-start">Start Date</label>
-                    <input type="date" id="recurring-start" required>
-                </div>
-                <button type="submit">Add Recurring Transaction</button>
+                
+                <button type="submit" id="add-btn">Add Transaction</button>
             </form>
-            <div id="recurring-list"></div>
+        </div>
+        
+        <div class="container">
+            <h2>Summary</h2>
+            <div class="summary">
+                <div class="summary-item income">
+                    <h3>Income</h3>
+                    <p id="total-income">$0.00</p>
+                </div>
+                <div class="summary-item expense">
+                    <h3>Expenses</h3>
+                    <p id="total-expenses">$0.00</p>
+                </div>
+                <div class="summary-item balance">
+                    <h3>Balance</h3>
+                    <p id="balance">$0.00</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="container">
+            <h2>Transactions</h2>
+            <div class="table-container">
+                <table id="transactions-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Category</th>
+                            <th>Type</th>
+                            <th>Amount</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactions-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="management-tab" class="tab-content">
+        <div class="container">
+            <h2>Data Management</h2>
+            <div class="toolbar">
+                <button id="export-btn">Export Data</button>
+                <button id="import-btn">Import Data</button>
+                <input type="file" id="import-file" class="file-input" accept=".json">
+            </div>
+            <div id="monthly-container">
+                <h2>Monthly Overview</h2>
+                <div class="monthly-view" id="monthly-view"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="budget-tab" class="tab-content">
+        <div class="container">
+            <div class="tabs">
+                <div class="tab active" data-tab="budget-goals">Budget Goals</div>
+                <div class="tab" data-tab="recurring">Recurring Transactions</div>
+            </div>
+
+            <div id="budget-goals-section">
+                <h2>Budget Goals</h2>
+                <form id="goal-form">
+                    <div class="form-group">
+                        <label for="goal-category">Category</label>
+                        <select id="goal-category" required>
+                            <option value="food">Food & Dining</option>
+                            <option value="transportation">Transportation</option>
+                            <option value="utilities">Utilities</option>
+                            <option value="entertainment">Entertainment</option>
+                            <option value="housing">Housing</option>
+                            <option value="shopping">Shopping</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="goal-amount">Monthly Limit</label>
+                        <input type="number" id="goal-amount" min="0" step="0.01" required placeholder="Enter monthly limit">
+                    </div>
+                    <button type="submit">Set Budget Goal</button>
+                </form>
+                <div class="budget-goals" id="goals-list"></div>
+            </div>
+
+            <div id="recurring-section" style="display: none;">
+                <h2>Recurring Transactions</h2>
+                <form id="recurring-form">
+                    <div class="form-group">
+                        <label for="recurring-description">Description</label>
+                        <input type="text" id="recurring-description" required placeholder="Enter description">
+                    </div>
+                    <div class="form-group">
+                        <label for="recurring-amount">Amount</label>
+                        <input type="number" id="recurring-amount" min="0" step="0.01" required placeholder="Enter amount">
+                    </div>
+                    <div class="form-group">
+                        <label for="recurring-type">Type</label>
+                        <select id="recurring-type" required>
+                            <option value="income">Income</option>
+                            <option value="expense">Expense</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="recurring-category">Category</label>
+                        <select id="recurring-category" required>
+                            <option value="salary">Salary</option>
+                            <option value="food">Food & Dining</option>
+                            <option value="transportation">Transportation</option>
+                            <option value="utilities">Utilities</option>
+                            <option value="entertainment">Entertainment</option>
+                            <option value="housing">Housing</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="recurring-frequency">Frequency</label>
+                        <select id="recurring-frequency" required>
+                            <option value="monthly">Monthly</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="recurring-start">Start Date</label>
+                        <input type="date" id="recurring-start" required>
+                    </div>
+                    <button type="submit">Add Recurring Transaction</button>
+                </form>
+                <div id="recurring-list"></div>
+            </div>
         </div>
     </div>
 
