@@ -31,6 +31,16 @@ let transactions = (() => {
     }
 })();
 
+let recurringTransactions = (() => {
+    try {
+        const stored = localStorage.getItem('recurringTransactions');
+        return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+        console.error('Error loading recurring transactions:', e);
+        return [];
+    }
+})();
+
 // DOM Elements
 const elements = {
     form: document.getElementById('transaction-form'),
@@ -494,32 +504,143 @@ const uiManager = {
     },
 
     updateRecurringList() {
-        if (!elements.recurringList) return;
+        const recurringList = document.getElementById('recurring-list');
+        if (!recurringList) return;
+
+        recurringList.innerHTML = '';
         
-        elements.recurringList.innerHTML = '';
-        
+        if (recurringTransactions.length === 0) {
+            recurringList.innerHTML = '<p class="empty-message">No recurring transactions added yet.</p>';
+            return;
+        }
+
         recurringTransactions.forEach(recurring => {
+            const amount = utils.formatCurrency(recurring.amount, recurring.currency);
+            const nextDate = this.calculateNextDate(recurring);
+            
             const item = document.createElement('div');
             item.className = 'recurring-transaction';
-            
-            const formattedCategory = recurring.category
-                .replace(/-/g, ' ')
-                .split(' ')
-                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                .join(' ');
-
             item.innerHTML = `
-                <div>
-                    <strong>${recurring.description}</strong>
-                    <span class="recurring-badge">${recurring.frequency}</span>
+                <div class="recurring-info">
+                    <h4>${recurring.description}</h4>
+                    <div class="recurring-details">
+                        <span class="recurring-amount ${recurring.type}">${amount}</span>
+                        <span class="recurring-badge">${recurring.frequency}</span>
+                        <span class="recurring-category">${recurring.category}</span>
+                    </div>
+                    <div class="recurring-dates">
+                        <span>Started: ${recurring.startDate}</span>
+                        <span>Next: ${nextDate}</span>
+                    </div>
                 </div>
-                <div>${formattedCategory} - ${utils.formatCurrency(utils.convertAmount(recurring.amount, recurring.currency, currentCurrency))}</div>
                 <div class="recurring-controls">
-                    <button class="delete-btn" onclick="recurringManager.deleteRecurring(${recurring.id})">Delete</button>
+                    <button onclick="recurringManager.deleteRecurring(${recurring.id})" class="btn btn-danger">Delete</button>
                 </div>
             `;
-            elements.recurringList.appendChild(item);
+            recurringList.appendChild(item);
         });
+    },
+
+    calculateNextDate(recurring) {
+        const today = new Date();
+        let nextDate = new Date(recurring.startDate);
+        
+        while (nextDate <= today) {
+            switch (recurring.frequency) {
+                case 'weekly':
+                    nextDate.setDate(nextDate.getDate() + 7);
+                    break;
+                case 'monthly':
+                    nextDate.setMonth(nextDate.getMonth() + 1);
+                    break;
+                case 'yearly':
+                    nextDate.setFullYear(nextDate.getFullYear() + 1);
+                    break;
+            }
+        }
+        
+        return nextDate.toISOString().split('T')[0];
+    }
+};
+
+// Recurring Transactions Management
+const recurringManager = {
+    addRecurring(formData) {
+        const recurring = {
+            id: Date.now(),
+            description: formData.description.trim(),
+            amount: parseFloat(formData.amount),
+            type: formData.type,
+            category: formData.category,
+            frequency: formData.frequency,
+            startDate: formData.startDate,
+            currency: currentCurrency
+        };
+        
+        recurringTransactions.push(recurring);
+        this.saveRecurring();
+        uiManager.updateRecurringList();
+        utils.showToast('Recurring transaction added successfully');
+    },
+
+    deleteRecurring(id) {
+        if (confirm('Are you sure you want to delete this recurring transaction?')) {
+            recurringTransactions = recurringTransactions.filter(r => r.id !== id);
+            this.saveRecurring();
+            uiManager.updateRecurringList();
+            utils.showToast('Recurring transaction deleted');
+        }
+    },
+
+    saveRecurring() {
+        try {
+            localStorage.setItem('recurringTransactions', JSON.stringify(recurringTransactions));
+        } catch (e) {
+            console.error('Error saving recurring transactions:', e);
+            utils.showToast('Error saving recurring transaction. Please try again.');
+        }
+    },
+
+    processRecurringTransactions() {
+        const today = new Date();
+        const lastCheck = new Date(localStorage.getItem('lastRecurringCheck') || '2000-01-01');
+        
+        recurringTransactions.forEach(recurring => {
+            const startDate = new Date(recurring.startDate);
+            if (startDate > today) return;
+
+            let nextDate = new Date(recurring.startDate);
+            while (nextDate <= today) {
+                if (nextDate > lastCheck) {
+                    // Add transaction
+                    const transaction = {
+                        id: Date.now() + Math.random(),
+                        description: `[Recurring] ${recurring.description}`,
+                        amount: recurring.amount,
+                        type: recurring.type,
+                        category: recurring.category,
+                        date: nextDate.toISOString().split('T')[0],
+                        currency: recurring.currency
+                    };
+                    transactions.push(transaction);
+                }
+
+                // Calculate next date
+                switch (recurring.frequency) {
+                    case 'weekly':
+                        nextDate.setDate(nextDate.getDate() + 7);
+                        break;
+                    case 'monthly':
+                        nextDate.setMonth(nextDate.getMonth() + 1);
+                        break;
+                    case 'yearly':
+                        nextDate.setFullYear(nextDate.getFullYear() + 1);
+                        break;
+                }
+            }
+        });
+
+        utils.updateLocalStorage();
     }
 };
 
@@ -666,6 +787,59 @@ function initializeEventListeners() {
             elements.goalForm.reset();
         });
     }
+
+    // Recurring transaction form submission
+    if (elements.recurringForm) {
+        elements.recurringForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                description: document.getElementById('recurring-description').value,
+                amount: document.getElementById('recurring-amount').value,
+                type: document.getElementById('recurring-type').value,
+                category: document.getElementById('recurring-category').value,
+                frequency: document.getElementById('recurring-frequency').value,
+                startDate: document.getElementById('recurring-start').value
+            };
+            
+            if (!formData.description || !formData.amount || !formData.startDate) {
+                utils.showToast('Please fill in all required fields');
+                return;
+            }
+
+            recurringManager.addRecurring(formData);
+            elements.recurringForm.reset();
+            document.getElementById('recurring-start').valueAsDate = new Date();
+        });
+    }
+
+    // Inner tabs in budget planning
+    const budgetTabs = document.querySelectorAll('.tabs .tab');
+    const budgetSections = {
+        'budget-goals': document.getElementById('budget-goals-section'),
+        'recurring': document.getElementById('recurring-section')
+    };
+
+    budgetTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            // Remove active class from all tabs
+            budgetTabs.forEach(t => t.classList.remove('active'));
+            
+            // Add active class to clicked tab
+            tab.classList.add('active');
+            
+            // Hide all sections
+            Object.values(budgetSections).forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Show selected section
+            const targetSection = budgetSections[tab.getAttribute('data-tab')];
+            if (targetSection) {
+                targetSection.style.display = 'block';
+            }
+        });
+    });
 }
 
 // Add delete budget goal function
