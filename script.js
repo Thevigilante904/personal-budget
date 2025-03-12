@@ -5,7 +5,11 @@ const EXCHANGE_RATES = {
 };
 
 // State Management
-let currentCurrency = 'JPY';
+let currentCurrency = (() => {
+    const stored = localStorage.getItem('currentCurrency');
+    return stored || 'JPY';
+})();
+
 let currentTab = 'main';
 let monthlyBudget = (() => {
     try {
@@ -250,7 +254,7 @@ const uiManager = {
             const row = document.createElement('tr');
             const convertedAmount = utils.convertAmount(
                 transaction.amount,
-                transaction.currency || 'USD',
+                transaction.currency || 'JPY',
                 currentCurrency
             );
             
@@ -289,7 +293,7 @@ const uiManager = {
         const summary = filteredTransactions.reduce((acc, transaction) => {
             const convertedAmount = utils.convertAmount(
                 transaction.amount,
-                transaction.currency || 'USD',
+                transaction.currency || 'JPY',
                 currentCurrency
             );
             
@@ -524,11 +528,14 @@ function initializeEventListeners() {
     // Set default date to today
     elements.dateInput.valueAsDate = new Date();
 
-    // Initialize currency toggle to JPY
+    // Initialize currency toggle based on stored preference
     if (elements.currencyToggle) {
-        elements.currencyToggle.checked = true;
-        elements.currentCurrencyLabel.textContent = `Current: JPY`;
-        elements.amountInput.placeholder = `Enter amount (JPY)`;
+        elements.currencyToggle.checked = currentCurrency === 'JPY';
+        elements.currentCurrencyLabel.textContent = `Current: ${currentCurrency}`;
+        elements.amountInput.placeholder = `Enter amount (${currentCurrency})`;
+        elements.amountInput.step = currentCurrency === 'JPY' ? '1' : '0.01';
+        const currencySymbol = currentCurrency === 'JPY' ? '¥' : '$';
+        elements.amountInput.previousElementSibling.textContent = `Amount (${currencySymbol})`;
     }
 
     // Form submission
@@ -556,8 +563,12 @@ function initializeEventListeners() {
     // Currency toggle
     elements.currencyToggle.addEventListener('change', function() {
         currentCurrency = this.checked ? 'JPY' : 'USD';
+        localStorage.setItem('currentCurrency', currentCurrency);
         elements.currentCurrencyLabel.textContent = `Current: ${currentCurrency}`;
         elements.amountInput.placeholder = `Enter amount (${currentCurrency})`;
+        elements.amountInput.step = currentCurrency === 'JPY' ? '1' : '0.01';
+        const currencySymbol = currentCurrency === 'JPY' ? '¥' : '$';
+        elements.amountInput.previousElementSibling.textContent = `Amount (${currencySymbol})`;
         uiManager.updateUI();
     });
 
