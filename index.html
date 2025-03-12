@@ -544,6 +544,84 @@
         <div class="monthly-view" id="monthly-view"></div>
     </div>
 
+    <div class="container">
+        <div class="tabs">
+            <div class="tab active" data-tab="budget-goals">Budget Goals</div>
+            <div class="tab" data-tab="recurring">Recurring Transactions</div>
+        </div>
+
+        <div id="budget-goals-section">
+            <h2>Budget Goals</h2>
+            <form id="goal-form">
+                <div class="form-group">
+                    <label for="goal-category">Category</label>
+                    <select id="goal-category" required>
+                        <option value="food">Food & Dining</option>
+                        <option value="transportation">Transportation</option>
+                        <option value="utilities">Utilities</option>
+                        <option value="entertainment">Entertainment</option>
+                        <option value="housing">Housing</option>
+                        <option value="shopping">Shopping</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="goal-amount">Monthly Limit</label>
+                    <input type="number" id="goal-amount" min="0" step="0.01" required placeholder="Enter monthly limit">
+                </div>
+                <button type="submit">Set Budget Goal</button>
+            </form>
+            <div class="budget-goals" id="goals-list"></div>
+        </div>
+
+        <div id="recurring-section" style="display: none;">
+            <h2>Recurring Transactions</h2>
+            <form id="recurring-form">
+                <div class="form-group">
+                    <label for="recurring-description">Description</label>
+                    <input type="text" id="recurring-description" required placeholder="Enter description">
+                </div>
+                <div class="form-group">
+                    <label for="recurring-amount">Amount</label>
+                    <input type="number" id="recurring-amount" min="0" step="0.01" required placeholder="Enter amount">
+                </div>
+                <div class="form-group">
+                    <label for="recurring-type">Type</label>
+                    <select id="recurring-type" required>
+                        <option value="income">Income</option>
+                        <option value="expense">Expense</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="recurring-category">Category</label>
+                    <select id="recurring-category" required>
+                        <option value="salary">Salary</option>
+                        <option value="food">Food & Dining</option>
+                        <option value="transportation">Transportation</option>
+                        <option value="utilities">Utilities</option>
+                        <option value="entertainment">Entertainment</option>
+                        <option value="housing">Housing</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="recurring-frequency">Frequency</label>
+                    <select id="recurring-frequency" required>
+                        <option value="monthly">Monthly</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="yearly">Yearly</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="recurring-start">Start Date</label>
+                    <input type="date" id="recurring-start" required>
+                </div>
+                <button type="submit">Add Recurring Transaction</button>
+            </form>
+            <div id="recurring-list"></div>
+        </div>
+    </div>
+
     <div id="toast" class="toast"></div>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -669,6 +747,7 @@
         currencyToggle.addEventListener('change', function() {
             currentCurrency = this.checked ? 'JPY' : 'USD';
             currentCurrencyLabel.textContent = `Current: ${currentCurrency}`;
+            amountInput.placeholder = `Enter amount (${currentCurrency})`;
             updateUI();
         });
 
@@ -746,166 +825,6 @@
             return new Intl.NumberFormat(currentCurrency === 'JPY' ? 'ja-JP' : 'en-US', options).format(amount);
         }
         
-        // Update UI with performance optimization and currency conversion
-        const updateUI = (() => {
-            let updateTimeout;
-            
-            return function() {
-                clearTimeout(updateTimeout);
-                updateTimeout = setTimeout(() => {
-                    // Clear transactions table
-                    transactionsBody.innerHTML = '';
-                    
-                    // Sort transactions by date (newest first)
-                    transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
-                    
-                    // Create document fragment for better performance
-                    const fragment = document.createDocumentFragment();
-                    
-                    // Add transactions to table
-                    transactions.forEach(transaction => {
-                        const row = document.createElement('tr');
-                        
-                        // Convert amount to current display currency
-                        const convertedAmount = convertAmount(
-                            transaction.amount,
-                            transaction.currency || 'USD', // Default to USD for older transactions
-                            currentCurrency
-                        );
-                        
-                        // Format date
-                        const dateObj = new Date(transaction.date);
-                        const formattedDate = dateObj.toLocaleDateString(
-                            currentCurrency === 'JPY' ? 'ja-JP' : 'en-US',
-                            {
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric'
-                            }
-                        );
-                        
-                        // Capitalize category
-                        const formattedCategory = transaction.category
-                            .replace(/-/g, ' ')
-                            .split(' ')
-                            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                            .join(' ');
-                        
-                        row.innerHTML = `
-                            <td>${formattedDate}</td>
-                            <td>${transaction.description}</td>
-                            <td>${formattedCategory}</td>
-                            <td>${transaction.type === 'income' ? 'Income' : 'Expense'}</td>
-                            <td style="color: ${transaction.type === 'income' ? 'var(--success-color)' : 'var(--danger-color)'}">
-                                ${formatCurrency(convertedAmount)}
-                            </td>
-                            <td>
-                                <button class="delete-btn" onclick="deleteTransaction(${transaction.id})">Delete</button>
-                            </td>
-                        `;
-                        
-                        fragment.appendChild(row);
-                    });
-                    
-                    transactionsBody.appendChild(fragment);
-                    
-                    // Calculate and update summary with currency conversion
-                    const summary = transactions.reduce((acc, transaction) => {
-                        const convertedAmount = convertAmount(
-                            transaction.amount,
-                            transaction.currency || 'USD',
-                            currentCurrency
-                        );
-                        
-                        if (transaction.type === 'income') {
-                            acc.income += convertedAmount;
-                        } else {
-                            acc.expenses += convertedAmount;
-                        }
-                        return acc;
-                    }, { income: 0, expenses: 0 });
-                    
-                    const balance = summary.income - summary.expenses;
-                    
-                    totalIncomeEl.textContent = formatCurrency(summary.income);
-                    totalExpensesEl.textContent = formatCurrency(summary.expenses);
-                    balanceEl.textContent = formatCurrency(balance);
-                    balanceEl.style.color = `var(${balance >= 0 ? '--success-color' : '--danger-color'})`;
-
-                    // Update amount input placeholder based on current currency
-                    amountInput.placeholder = `Enter amount (${currentCurrency})`;
-                }, 0);
-            };
-        })();
-        
-        // Initial UI update
-        updateUI();
-
-        // Add service worker for offline support
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js').catch(err => {
-                    console.error('ServiceWorker registration failed:', err);
-                });
-            });
-        }
-
-        // Export data
-        exportBtn.addEventListener('click', () => {
-            const data = JSON.stringify(transactions, null, 2);
-            const blob = new Blob([data], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `budget_data_${new Date().toISOString().split('T')[0]}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            showToast('Data exported successfully');
-        });
-
-        // Import data
-        importBtn.addEventListener('click', () => importFile.click());
-        importFile.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                try {
-                    const importedData = JSON.parse(event.target.result);
-                    if (Array.isArray(importedData)) {
-                        transactions = importedData;
-                        updateLocalStorage();
-                        updateUI();
-                        showToast('Data imported successfully');
-                    } else {
-                        throw new Error('Invalid data format');
-                    }
-                } catch (error) {
-                    showToast('Error importing data: Invalid format');
-                }
-            };
-            reader.readAsText(file);
-        });
-
-        // Toggle views
-        viewMonthlyBtn.addEventListener('click', () => {
-            monthlyContainer.style.display = 'block';
-            transactionContainer.style.display = 'none';
-            viewMonthlyBtn.style.display = 'none';
-            viewTransactionsBtn.style.display = 'inline-block';
-            updateMonthlyView();
-        });
-
-        viewTransactionsBtn.addEventListener('click', () => {
-            monthlyContainer.style.display = 'none';
-            transactionContainer.style.display = 'block';
-            viewMonthlyBtn.style.display = 'inline-block';
-            viewTransactionsBtn.style.display = 'none';
-        });
-
         // Search and filter functionality
         function filterTransactions() {
             const searchTerm = searchInput.value.toLowerCase();
@@ -913,7 +832,10 @@
             const categoryFilter = filterCategory.value;
             const monthFilter = filterMonth.value;
 
-            return transactions.filter(transaction => {
+            // Sort transactions by date (newest first)
+            const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            return sortedTransactions.filter(transaction => {
                 const matchesSearch = transaction.description.toLowerCase().includes(searchTerm) ||
                     transaction.category.toLowerCase().includes(searchTerm);
                 const matchesType = typeFilter === 'all' || transaction.type === typeFilter;
@@ -941,93 +863,76 @@
             });
         }
 
-        // Monthly view update
-        function updateMonthlyView() {
-            monthlyView.innerHTML = '';
-            const months = new Map();
+        // Budget Goals functions
+        function updateBudgetGoals() {
+            if (!goalsList) return; // Guard clause if element doesn't exist
+            
+            goalsList.innerHTML = '';
+            const currentMonth = new Date().toISOString().substring(0, 7);
+            
+            Object.entries(budgetGoals).forEach(([category, goal]) => {
+                const goalAmount = convertAmount(goal.amount, goal.currency, currentCurrency);
+                
+                const spending = transactions
+                    .filter(t => t.category === category && t.date.startsWith(currentMonth) && t.type === 'expense')
+                    .reduce((sum, t) => sum + convertAmount(t.amount, t.currency || 'USD', currentCurrency), 0);
+                
+                const percentage = (spending / goalAmount) * 100;
+                const formattedCategory = category
+                    .replace(/-/g, ' ')
+                    .split(' ')
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(' ');
 
-            // Group transactions by month
-            transactions.forEach(transaction => {
-                const month = transaction.date.substring(0, 7);
-                if (!months.has(month)) {
-                    months.set(month, {
-                        income: 0,
-                        expenses: 0,
-                        transactions: []
-                    });
-                }
-                const monthData = months.get(month);
-                const amount = convertAmount(
-                    transaction.amount,
-                    transaction.currency || 'USD',
-                    currentCurrency
-                );
-
-                if (transaction.type === 'income') {
-                    monthData.income += amount;
-                } else {
-                    monthData.expenses += amount;
-                }
-                monthData.transactions.push(transaction);
+                const goalItem = document.createElement('div');
+                goalItem.className = 'goal-item';
+                goalItem.innerHTML = `
+                    <div>
+                        <strong>${formattedCategory}</strong><br>
+                        ${formatCurrency(spending)} / ${formatCurrency(goalAmount)}
+                    </div>
+                    <div class="goal-progress">
+                        <div class="goal-bar ${percentage >= 90 ? 'goal-warning' : ''}" 
+                             style="width: ${Math.min(percentage, 100)}%"></div>
+                    </div>
+                    <button class="delete-btn" onclick="deleteBudgetGoal('${category}')">×</button>
+                `;
+                goalsList.appendChild(goalItem);
             });
-
-            // Create monthly cards
-            [...months.entries()]
-                .sort((a, b) => b[0].localeCompare(a[0]))
-                .forEach(([month, data]) => {
-                    const card = document.createElement('div');
-                    card.className = 'monthly-card';
-                    const date = new Date(month + '-01');
-                    const monthName = date.toLocaleString('default', { month: 'long', year: 'numeric' });
-                    
-                    const balance = data.income - data.expenses;
-                    card.innerHTML = `
-                        <h4>${monthName}</h4>
-                        <div>Income: ${formatCurrency(data.income)}</div>
-                        <div>Expenses: ${formatCurrency(data.expenses)}</div>
-                        <div>Balance: <span style="color: var(${balance >= 0 ? '--success-color' : '--danger-color'})">
-                            ${formatCurrency(balance)}
-                        </span></div>
-                        <canvas id="chart-${month}"></canvas>
-                    `;
-                    monthlyView.appendChild(card);
-
-                    // Create chart
-                    const ctx = document.getElementById(`chart-${month}`).getContext('2d');
-                    new Chart(ctx, {
-                        type: 'doughnut',
-                        data: {
-                            labels: ['Income', 'Expenses'],
-                            datasets: [{
-                                data: [data.income, data.expenses],
-                                backgroundColor: [
-                                    'var(--success-color)',
-                                    'var(--danger-color)'
-                                ]
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    position: 'bottom'
-                                }
-                            }
-                        }
-                    });
-                });
         }
 
-        // Add event listeners for search and filters
-        searchInput.addEventListener('input', () => updateUI());
-        filterType.addEventListener('change', () => updateUI());
-        filterCategory.addEventListener('change', () => updateUI());
-        filterMonth.addEventListener('change', () => updateUI());
+        // Recurring transactions functions
+        function updateRecurringList() {
+            if (!recurringList) return; // Guard clause if element doesn't exist
+            
+            recurringList.innerHTML = '';
+            
+            recurringTransactions.forEach(recurring => {
+                const item = document.createElement('div');
+                item.className = 'recurring-transaction';
+                
+                const formattedCategory = recurring.category
+                    .replace(/-/g, ' ')
+                    .split(' ')
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(' ');
 
-        // Update the updateUI function to use filters
-        const originalUpdateUI = updateUI;
-        updateUI = (() => {
+                item.innerHTML = `
+                    <div>
+                        <strong>${recurring.description}</strong>
+                        <span class="recurring-badge">${recurring.frequency}</span>
+                    </div>
+                    <div>${formattedCategory} - ${formatCurrency(convertAmount(recurring.amount, recurring.currency, currentCurrency))}</div>
+                    <div class="recurring-controls">
+                        <button class="delete-btn" onclick="deleteRecurring(${recurring.id})">Delete</button>
+                    </div>
+                `;
+                recurringList.appendChild(item);
+            });
+        }
+
+        // Update UI with performance optimization and currency conversion
+        let updateUI = (() => {
             let updateTimeout;
             
             return function() {
@@ -1109,216 +1014,74 @@
                     balanceEl.textContent = formatCurrency(balance);
                     balanceEl.style.color = `var(${balance >= 0 ? '--success-color' : '--danger-color'})`;
 
+                    // Update amount input placeholder based on current currency
+                    amountInput.placeholder = `Enter amount (${currentCurrency})`;
+
                     // Update monthly view if visible
                     if (monthlyContainer.style.display !== 'none') {
                         updateMonthlyView();
                     }
+
+                    // Update budget goals and recurring transactions
+                    updateBudgetGoals();
+                    updateRecurringList();
                 }, 0);
             };
         })();
 
+        // Add event listeners for search and filters
+        searchInput.addEventListener('input', () => updateUI());
+        filterType.addEventListener('change', () => updateUI());
+        filterCategory.addEventListener('change', () => updateUI());
+        filterMonth.addEventListener('change', () => updateUI());
+
+        // Initialize budget goals and recurring transactions
+        if (goalForm) {
+            goalForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const category = document.getElementById('goal-category').value;
+                const amount = parseFloat(document.getElementById('goal-amount').value);
+
+                budgetGoals[category] = {
+                    amount,
+                    currency: currentCurrency
+                };
+
+                localStorage.setItem('budgetGoals', JSON.stringify(budgetGoals));
+                updateBudgetGoals();
+                showToast('Budget goal set successfully');
+                goalForm.reset();
+            });
+        }
+
+        if (recurringForm) {
+            recurringForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const recurring = {
+                    id: Date.now(),
+                    description: document.getElementById('recurring-description').value,
+                    amount: parseFloat(document.getElementById('recurring-amount').value),
+                    type: document.getElementById('recurring-type').value,
+                    category: document.getElementById('recurring-category').value,
+                    frequency: document.getElementById('recurring-frequency').value,
+                    startDate: document.getElementById('recurring-start').value,
+                    currency: currentCurrency,
+                    lastProcessed: null
+                };
+
+                recurringTransactions.push(recurring);
+                localStorage.setItem('recurringTransactions', JSON.stringify(recurringTransactions));
+                updateRecurringList();
+                processRecurringTransactions();
+                showToast('Recurring transaction added');
+                recurringForm.reset();
+            });
+        }
+
         // Initial UI update
         updateUI();
 
-        // Budget Goals and Recurring Transactions
-        let budgetGoals = JSON.parse(localStorage.getItem('budgetGoals') || '{}');
-        let recurringTransactions = JSON.parse(localStorage.getItem('recurringTransactions') || '[]');
-
-        // DOM Elements for Budget Goals and Recurring Transactions
-        const goalForm = document.getElementById('goal-form');
-        const goalsList = document.getElementById('goals-list');
-        const recurringForm = document.getElementById('recurring-form');
-        const recurringList = document.getElementById('recurring-list');
-        const tabs = document.querySelectorAll('.tab');
-        const budgetGoalsSection = document.getElementById('budget-goals-section');
-        const recurringSection = document.getElementById('recurring-section');
-
-        // Tab switching
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                tabs.forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                
-                if (tab.dataset.tab === 'budget-goals') {
-                    budgetGoalsSection.style.display = 'block';
-                    recurringSection.style.display = 'none';
-                } else {
-                    budgetGoalsSection.style.display = 'none';
-                    recurringSection.style.display = 'block';
-                }
-            });
-        });
-
-        // Budget Goals
-        goalForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const category = document.getElementById('goal-category').value;
-            const amount = parseFloat(document.getElementById('goal-amount').value);
-
-            budgetGoals[category] = {
-                amount,
-                currency: currentCurrency
-            };
-
-            localStorage.setItem('budgetGoals', JSON.stringify(budgetGoals));
-            updateBudgetGoals();
-            showToast('Budget goal set successfully');
-            goalForm.reset();
-        });
-
-        function updateBudgetGoals() {
-            goalsList.innerHTML = '';
-            const currentMonth = new Date().toISOString().substring(0, 7);
-            
-            Object.entries(budgetGoals).forEach(([category, goal]) => {
-                // Convert goal amount to current currency
-                const goalAmount = convertAmount(goal.amount, goal.currency, currentCurrency);
-                
-                // Calculate current spending for the category this month
-                const spending = transactions
-                    .filter(t => t.category === category && t.date.startsWith(currentMonth) && t.type === 'expense')
-                    .reduce((sum, t) => sum + convertAmount(t.amount, t.currency || 'USD', currentCurrency), 0);
-                
-                const percentage = (spending / goalAmount) * 100;
-                const formattedCategory = category
-                    .replace(/-/g, ' ')
-                    .split(' ')
-                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                    .join(' ');
-
-                const goalItem = document.createElement('div');
-                goalItem.className = 'goal-item';
-                goalItem.innerHTML = `
-                    <div>
-                        <strong>${formattedCategory}</strong><br>
-                        ${formatCurrency(spending)} / ${formatCurrency(goalAmount)}
-                    </div>
-                    <div class="goal-progress">
-                        <div class="goal-bar ${percentage >= 90 ? 'goal-warning' : ''}" 
-                             style="width: ${Math.min(percentage, 100)}%"></div>
-                    </div>
-                    <button class="delete-btn" onclick="deleteBudgetGoal('${category}')">×</button>
-                `;
-                goalsList.appendChild(goalItem);
-            });
-        }
-
-        function deleteBudgetGoal(category) {
-            delete budgetGoals[category];
-            localStorage.setItem('budgetGoals', JSON.stringify(budgetGoals));
-            updateBudgetGoals();
-            showToast('Budget goal deleted');
-        }
-
-        // Recurring Transactions
-        recurringForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const recurring = {
-                id: Date.now(),
-                description: document.getElementById('recurring-description').value,
-                amount: parseFloat(document.getElementById('recurring-amount').value),
-                type: document.getElementById('recurring-type').value,
-                category: document.getElementById('recurring-category').value,
-                frequency: document.getElementById('recurring-frequency').value,
-                startDate: document.getElementById('recurring-start').value,
-                currency: currentCurrency,
-                lastProcessed: null
-            };
-
-            recurringTransactions.push(recurring);
-            localStorage.setItem('recurringTransactions', JSON.stringify(recurringTransactions));
-            updateRecurringList();
-            processRecurringTransactions();
-            showToast('Recurring transaction added');
-            recurringForm.reset();
-        });
-
-        function updateRecurringList() {
-            recurringList.innerHTML = '';
-            
-            recurringTransactions.forEach(recurring => {
-                const item = document.createElement('div');
-                item.className = 'recurring-transaction';
-                
-                const formattedCategory = recurring.category
-                    .replace(/-/g, ' ')
-                    .split(' ')
-                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                    .join(' ');
-
-                item.innerHTML = `
-                    <div>
-                        <strong>${recurring.description}</strong>
-                        <span class="recurring-badge">${recurring.frequency}</span>
-                    </div>
-                    <div>${formattedCategory} - ${formatCurrency(convertAmount(recurring.amount, recurring.currency, currentCurrency))}</div>
-                    <div class="recurring-controls">
-                        <button class="delete-btn" onclick="deleteRecurring(${recurring.id})">Delete</button>
-                    </div>
-                `;
-                recurringList.appendChild(item);
-            });
-        }
-
-        function deleteRecurring(id) {
-            recurringTransactions = recurringTransactions.filter(r => r.id !== id);
-            localStorage.setItem('recurringTransactions', JSON.stringify(recurringTransactions));
-            updateRecurringList();
-            showToast('Recurring transaction deleted');
-        }
-
-        function processRecurringTransactions() {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
-            recurringTransactions.forEach(recurring => {
-                const startDate = new Date(recurring.startDate);
-                startDate.setHours(0, 0, 0, 0);
-                
-                const lastProcessed = recurring.lastProcessed ? new Date(recurring.lastProcessed) : null;
-                let nextDate = new Date(startDate);
-
-                // Calculate next occurrence
-                if (lastProcessed) {
-                    switch (recurring.frequency) {
-                        case 'weekly':
-                            nextDate = new Date(lastProcessed);
-                            nextDate.setDate(nextDate.getDate() + 7);
-                            break;
-                        case 'monthly':
-                            nextDate = new Date(lastProcessed);
-                            nextDate.setMonth(nextDate.getMonth() + 1);
-                            break;
-                        case 'yearly':
-                            nextDate = new Date(lastProcessed);
-                            nextDate.setFullYear(nextDate.getFullYear() + 1);
-                            break;
-                    }
-                }
-
-                // If next occurrence is due
-                if (nextDate <= today) {
-                    const transaction = {
-                        id: Date.now(),
-                        description: `${recurring.description} (Recurring)`,
-                        amount: recurring.amount,
-                        type: recurring.type,
-                        category: recurring.category,
-                        date: today.toISOString().split('T')[0],
-                        currency: recurring.currency
-                    };
-
-                    transactions.push(transaction);
-                    recurring.lastProcessed = today.toISOString();
-                }
-            });
-
-            localStorage.setItem('recurringTransactions', JSON.stringify(recurringTransactions));
-            localStorage.setItem('budgetTransactions', JSON.stringify(transactions));
-            updateUI();
-        }
-
-        // Check for recurring transactions daily
+        // Process recurring transactions on page load
         const lastCheck = localStorage.getItem('lastRecurringCheck');
         const today = new Date().toISOString().split('T')[0];
         
@@ -1326,18 +1089,6 @@
             processRecurringTransactions();
             localStorage.setItem('lastRecurringCheck', today);
         }
-
-        // Update budget goals when transactions change
-        const originalUpdateUI = updateUI;
-        updateUI = function() {
-            originalUpdateUI();
-            updateBudgetGoals();
-            updateRecurringList();
-        };
-
-        // Initial update of goals and recurring transactions
-        updateBudgetGoals();
-        updateRecurringList();
     </script>
 </body>
 </html>
