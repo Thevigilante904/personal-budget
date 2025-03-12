@@ -820,6 +820,14 @@ function initializeEventListeners() {
         'recurring': document.getElementById('recurring-section')
     };
 
+    // Show budget goals section by default
+    Object.values(budgetSections).forEach(section => {
+        if (section) section.style.display = 'none';
+    });
+    if (budgetSections['budget-goals']) {
+        budgetSections['budget-goals'].style.display = 'block';
+    }
+
     budgetTabs.forEach(tab => {
         tab.addEventListener('click', () => {
             // Remove active class from all tabs
@@ -830,13 +838,20 @@ function initializeEventListeners() {
             
             // Hide all sections
             Object.values(budgetSections).forEach(section => {
-                section.style.display = 'none';
+                if (section) section.style.display = 'none';
             });
             
             // Show selected section
-            const targetSection = budgetSections[tab.getAttribute('data-tab')];
-            if (targetSection) {
-                targetSection.style.display = 'block';
+            const targetId = tab.getAttribute('data-tab');
+            if (budgetSections[targetId]) {
+                budgetSections[targetId].style.display = 'block';
+                
+                // Update the relevant section
+                if (targetId === 'budget-goals') {
+                    uiManager.updateBudgetGoals();
+                } else if (targetId === 'recurring') {
+                    uiManager.updateRecurringList();
+                }
             }
         });
     });
