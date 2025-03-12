@@ -635,6 +635,84 @@
             border-radius: 8px;
             margin-top: 1rem;
         }
+
+        /* Add styles for spending trends */
+        .trends-summary {
+            background: var(--container-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .trends-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .trend-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .trend-item h4 {
+            margin: 0;
+            font-size: 0.9em;
+            color: var(--text-color);
+            opacity: 0.8;
+        }
+
+        .trend-item p {
+            margin: 10px 0;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .trend-item span {
+            font-size: 0.8em;
+            opacity: 0.7;
+        }
+
+        .trend-up p {
+            color: var(--success-color);
+        }
+
+        .trend-down p {
+            color: var(--danger-color);
+        }
+
+        .savings-potential {
+            margin-top: 20px;
+        }
+
+        .savings-potential h4 {
+            margin: 0 0 15px 0;
+            color: var(--text-color);
+        }
+
+        .savings-potential ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .savings-potential li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+        }
+
+        .opportunity-icon {
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
     </style>
 </head>
 <body>
