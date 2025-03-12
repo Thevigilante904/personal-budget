@@ -373,25 +373,27 @@ const uiManager = {
             });
 
             window.monthlyChart = new Chart(monthlyCtx, {
-                type: 'bar',
+                type: 'line',
                 data: {
                     labels: monthLabels,
                     datasets: [
                         {
                             label: 'Income',
                             data: monthlyData.map(d => d.income),
-                            backgroundColor: 'rgba(46, 204, 113, 0.5)',
+                            backgroundColor: 'rgba(46, 204, 113, 0.1)',
                             borderColor: 'rgba(46, 204, 113, 1)',
-                            borderWidth: 1,
-                            borderRadius: 4
+                            borderWidth: 2,
+                            tension: 0.4,
+                            fill: true
                         },
                         {
                             label: 'Expenses',
                             data: monthlyData.map(d => d.expenses),
-                            backgroundColor: 'rgba(231, 76, 60, 0.5)',
+                            backgroundColor: 'rgba(231, 76, 60, 0.1)',
                             borderColor: 'rgba(231, 76, 60, 1)',
-                            borderWidth: 1,
-                            borderRadius: 4
+                            borderWidth: 2,
+                            tension: 0.4,
+                            fill: true
                         }
                     ]
                 },
