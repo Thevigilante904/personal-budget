@@ -713,6 +713,7 @@ const recurringManager = {
     processRecurringTransactions() {
         const today = new Date();
         const lastCheck = new Date(localStorage.getItem('lastRecurringCheck') || '2000-01-01');
+        let transactionsAdded = false;
         
         recurringTransactions.forEach(recurring => {
             const startDate = new Date(recurring.startDate);
@@ -732,6 +733,7 @@ const recurringManager = {
                         currency: recurring.currency
                     };
                     transactions.push(transaction);
+                    transactionsAdded = true;
                 }
 
                 // Calculate next date
@@ -749,7 +751,11 @@ const recurringManager = {
             }
         });
 
-        utils.updateLocalStorage();
+        if (transactionsAdded) {
+            utils.updateLocalStorage();
+            uiManager.updateUI();
+            utils.showToast('Recurring transactions have been processed');
+        }
     }
 };
 
