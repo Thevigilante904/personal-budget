@@ -5,7 +5,7 @@ const EXCHANGE_RATES = {
 };
 
 // State Management
-let currentCurrency = 'USD';
+let currentCurrency = 'JPY';
 let currentTab = 'main';
 let monthlyBudget = (() => {
     try {
@@ -523,6 +523,13 @@ const uiManager = {
 function initializeEventListeners() {
     // Set default date to today
     elements.dateInput.valueAsDate = new Date();
+
+    // Initialize currency toggle to JPY
+    if (elements.currencyToggle) {
+        elements.currencyToggle.checked = true;
+        elements.currentCurrencyLabel.textContent = `Current: JPY`;
+        elements.amountInput.placeholder = `Enter amount (JPY)`;
+    }
 
     // Form submission
     elements.form.addEventListener('submit', (e) => {
