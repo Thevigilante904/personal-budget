@@ -726,10 +726,45 @@
             margin-right: 10px;
             font-size: 1.2em;
         }
+
+        .newspaper-title {
+            font-family: "Playfair Display", "Times New Roman", serif;
+            text-align: center;
+            border-bottom: 2px solid var(--text-color);
+            border-top: 2px solid var(--text-color);
+            padding: 20px 0;
+            margin: 20px 0 40px 0;
+        }
+
+        .newspaper-title h1 {
+            font-size: 3.5em;
+            font-weight: 900;
+            margin: 0;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .newspaper-title .subtitle {
+            font-style: italic;
+            font-size: 1.2em;
+            color: var(--text-color);
+            opacity: 0.8;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .newspaper-title h1 {
+                font-size: 2.5em;
+            }
+        }
     </style>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;900&display=swap" rel="stylesheet">
 </head>
 <body>
-    <h1>Personal Budget Tracker</h1>
+    <div class="newspaper-title">
+        <h1>Personal Budget Tracker</h1>
+        <div class="subtitle">Your Financial Journey, Carefully Chronicled</div>
+    </div>
     
     <div class="nav-tabs">
         <button class="nav-tab active" data-tab="main">Dashboard</button>
