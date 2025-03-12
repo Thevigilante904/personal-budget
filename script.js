@@ -469,6 +469,115 @@ const uiManager = {
                 <div>Balance: ${utils.formatCurrency(data.income - data.expenses)}</div>
             </div>
         `).join('');
+
+        // Add spending trends analysis
+        const trends = this.analyzeSpendingTrends(monthlyData);
+        const trendsSummary = document.createElement('div');
+        trendsSummary.className = 'trends-summary';
+        trendsSummary.innerHTML = `
+            <h3>Spending Insights</h3>
+            <div class="trends-grid">
+                <div class="trend-item ${trends.monthlyChange > 0 ? 'trend-up' : 'trend-down'}">
+                    <h4>Monthly Change</h4>
+                    <p>${Math.abs(trends.monthlyChange).toFixed(1)}% ${trends.monthlyChange > 0 ? '↑' : '↓'}</p>
+                    <span>from last month</span>
+                </div>
+                <div class="trend-item">
+                    <h4>Average Monthly Spending</h4>
+                    <p>${utils.formatCurrency(trends.averageSpending)}</p>
+                    <span>last 3 months</span>
+                </div>
+                <div class="trend-item ${trends.topCategory.change > 0 ? 'trend-up' : 'trend-down'}">
+                    <h4>Top Spending Category</h4>
+                    <p>${trends.topCategory.name}</p>
+                    <span>${Math.abs(trends.topCategory.change).toFixed(1)}% ${trends.topCategory.change > 0 ? '↑' : '↓'}</span>
+                </div>
+            </div>
+            <div class="savings-potential">
+                <h4>Savings Opportunities</h4>
+                <ul>
+                    ${trends.savingsOpportunities.map(opp => `
+                        <li>
+                            <span class="opportunity-icon">💡</span>
+                            ${opp}
+                        </li>
+                    `).join('')}
+                </ul>
+            </div>
+        `;
+        elements.monthlyView.insertBefore(trendsSummary, elements.monthlyView.firstChild);
+    },
+
+    analyzeSpendingTrends(monthlyData) {
+        const last3Months = monthlyData.slice(-3);
+        const currentMonth = last3Months[2];
+        const lastMonth = last3Months[1];
+        
+        // Calculate monthly change
+        const monthlyChange = lastMonth.expenses > 0 
+            ? ((currentMonth.expenses - lastMonth.expenses) / lastMonth.expenses) * 100
+            : 0;
+
+        // Calculate average spending
+        const averageSpending = last3Months.reduce((sum, month) => sum + month.expenses, 0) / 3;
+
+        // Analyze category trends
+        const currentMonthStr = new Date().toISOString().substring(0, 7);
+        const lastMonthDate = new Date();
+        lastMonthDate.setMonth(lastMonthDate.getMonth() - 1);
+        const lastMonthStr = lastMonthDate.toISOString().substring(0, 7);
+
+        const currentCategories = this.getCategoryTotals(currentMonthStr);
+        const lastCategories = this.getCategoryTotals(lastMonthStr);
+
+        let topCategory = { name: 'None', amount: 0, change: 0 };
+        Object.entries(currentCategories).forEach(([category, amount]) => {
+            const lastAmount = lastCategories[category] || 0;
+            const change = lastAmount > 0 ? ((amount - lastAmount) / lastAmount) * 100 : 0;
+            
+            if (amount > topCategory.amount) {
+                topCategory = {
+                    name: category.replace(/-/g, ' ')
+                        .split(' ')
+                        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                        .join(' '),
+                    amount: amount,
+                    change: change
+                };
+            }
+        });
+
+        // Generate savings opportunities
+        const savingsOpportunities = [];
+        if (monthlyChange > 10) {
+            savingsOpportunities.push('Your spending has increased significantly. Consider reviewing your recent expenses.');
+        }
+        if (topCategory.change > 15) {
+            savingsOpportunities.push(`${topCategory.name} spending has increased by ${topCategory.change.toFixed(1)}%. Look for ways to reduce these expenses.`);
+        }
+        if (currentMonth.expenses > currentMonth.income) {
+            savingsOpportunities.push('Your expenses exceed your income. Consider creating a stricter budget.');
+        }
+        if (savingsOpportunities.length === 0) {
+            savingsOpportunities.push('Great job managing your expenses! Keep maintaining your current spending habits.');
+        }
+
+        return {
+            monthlyChange,
+            averageSpending,
+            topCategory,
+            savingsOpportunities
+        };
+    },
+
+    getCategoryTotals(monthStr) {
+        return transactions
+            .filter(t => t.date.startsWith(monthStr) && t.type === 'expense')
+            .reduce((acc, t) => {
+                const amount = utils.convertAmount(t.amount, t.currency || 'USD', currentCurrency);
+                acc[t.category] = (acc[t.category] || 0) + amount;
+                return acc;
+            }, {});
     },
 
     updateBudgetGoals() {
