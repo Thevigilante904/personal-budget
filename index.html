@@ -287,10 +287,85 @@
                 background-color: #d63031;
             }
         }
+
+        /* Currency switcher styles */
+        .currency-switch {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 30px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary-color);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(30px);
+        }
+
+        .currency-label {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .current-currency {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
     </style>
 </head>
 <body>
     <h1>Personal Budget Tracker</h1>
+    
+    <div class="container">
+        <div class="currency-switch">
+            <span class="currency-label">USD</span>
+            <label class="switch">
+                <input type="checkbox" id="currency-toggle">
+                <span class="slider"></span>
+            </label>
+            <span class="currency-label">JPY</span>
+            <span class="current-currency" id="current-currency">Current: USD</span>
+        </div>
+    </div>
     
     <div class="container">
         <h2>Add Transaction</h2>
@@ -378,6 +453,15 @@
     <div id="toast" class="toast"></div>
     
     <script>
+        // Currency conversion rates
+        const EXCHANGE_RATES = {
+            USD_TO_JPY: 151.67, // As of 2024, you might want to update this
+            JPY_TO_USD: 1 / 151.67
+        };
+
+        // Currency state
+        let currentCurrency = 'USD';
+        
         // Initialize data with data validation
         let transactions = (() => {
             try {
@@ -401,6 +485,8 @@
         const totalExpensesEl = document.getElementById('total-expenses');
         const balanceEl = document.getElementById('balance');
         const toast = document.getElementById('toast');
+        const currencyToggle = document.getElementById('currency-toggle');
+        const currentCurrencyLabel = document.getElementById('current-currency');
         
         // Set default date to today
         dateInput.valueAsDate = new Date();
@@ -470,6 +556,26 @@
         // Trigger category update on page load
         typeSelect.dispatchEvent(new Event('change'));
         
+        // Currency toggle handler
+        currencyToggle.addEventListener('change', function() {
+            currentCurrency = this.checked ? 'JPY' : 'USD';
+            currentCurrencyLabel.textContent = `Current: ${currentCurrency}`;
+            updateUI();
+        });
+
+        // Convert amount between currencies
+        function convertAmount(amount, fromCurrency, toCurrency) {
+            if (fromCurrency === toCurrency) return amount;
+            
+            if (fromCurrency === 'USD' && toCurrency === 'JPY') {
+                return amount * EXCHANGE_RATES.USD_TO_JPY;
+            } else if (fromCurrency === 'JPY' && toCurrency === 'USD') {
+                return amount * EXCHANGE_RATES.JPY_TO_USD;
+            }
+            
+            return amount;
+        }
+        
         // Add transaction
         form.addEventListener('submit', function(e) {
             e.preventDefault();
@@ -485,7 +591,8 @@
                 amount: parseFloat(amountInput.value),
                 type: typeSelect.value,
                 category: categorySelect.value,
-                date: dateInput.value
+                date: dateInput.value,
+                currency: currentCurrency // Store the currency used when creating the transaction
             };
             
             transactions.push(transaction);
@@ -520,13 +627,17 @@
         
         // Format currency with locale support
         function formatCurrency(amount) {
-            return new Intl.NumberFormat('en-US', {
+            const options = {
                 style: 'currency',
-                currency: 'USD'
-            }).format(amount);
+                currency: currentCurrency,
+                minimumFractionDigits: currentCurrency === 'JPY' ? 0 : 2,
+                maximumFractionDigits: currentCurrency === 'JPY' ? 0 : 2
+            };
+            
+            return new Intl.NumberFormat(currentCurrency === 'JPY' ? 'ja-JP' : 'en-US', options).format(amount);
         }
         
-        // Update UI with performance optimization
+        // Update UI with performance optimization and currency conversion
         const updateUI = (() => {
             let updateTimeout;
             
@@ -546,13 +657,23 @@
                     transactions.forEach(transaction => {
                         const row = document.createElement('tr');
                         
+                        // Convert amount to current display currency
+                        const convertedAmount = convertAmount(
+                            transaction.amount,
+                            transaction.currency || 'USD', // Default to USD for older transactions
+                            currentCurrency
+                        );
+                        
                         // Format date
                         const dateObj = new Date(transaction.date);
-                        const formattedDate = dateObj.toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric'
-                        });
+                        const formattedDate = dateObj.toLocaleDateString(
+                            currentCurrency === 'JPY' ? 'ja-JP' : 'en-US',
+                            {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric'
+                            }
+                        );
                         
                         // Capitalize category
                         const formattedCategory = transaction.category
@@ -567,7 +688,7 @@
                             <td>${formattedCategory}</td>
                             <td>${transaction.type === 'income' ? 'Income' : 'Expense'}</td>
                             <td style="color: ${transaction.type === 'income' ? 'var(--success-color)' : 'var(--danger-color)'}">
-                                ${formatCurrency(transaction.amount)}
+                                ${formatCurrency(convertedAmount)}
                             </td>
                             <td>
                                 <button class="delete-btn" onclick="deleteTransaction(${transaction.id})">Delete</button>
@@ -579,12 +700,18 @@
                     
                     transactionsBody.appendChild(fragment);
                     
-                    // Calculate and update summary
+                    // Calculate and update summary with currency conversion
                     const summary = transactions.reduce((acc, transaction) => {
+                        const convertedAmount = convertAmount(
+                            transaction.amount,
+                            transaction.currency || 'USD',
+                            currentCurrency
+                        );
+                        
                         if (transaction.type === 'income') {
-                            acc.income += transaction.amount;
+                            acc.income += convertedAmount;
                         } else {
-                            acc.expenses += transaction.amount;
+                            acc.expenses += convertedAmount;
                         }
                         return acc;
                     }, { income: 0, expenses: 0 });
@@ -595,6 +722,9 @@
                     totalExpensesEl.textContent = formatCurrency(summary.expenses);
                     balanceEl.textContent = formatCurrency(balance);
                     balanceEl.style.color = `var(${balance >= 0 ? '--success-color' : '--danger-color'})`;
+
+                    // Update amount input placeholder based on current currency
+                    amountInput.placeholder = `Enter amount (${currentCurrency})`;
                 }, 0);
             };
         })();
@@ -613,4 +743,3 @@
     </script>
 </body>
 </html>
-
