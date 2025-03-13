@@ -730,74 +730,73 @@
         .newspaper-title {
             font-family: "Playfair Display", "Times New Roman", serif;
             text-align: center;
-            padding: 40px 20px;
+            padding: 25px 0;
             margin: 15px 0 30px 0;
             position: relative;
             overflow: hidden;
-            background-color: var(--background-color);
-            border: 2px solid var(--text-color);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 300' fill='rgba(128, 128, 128, 0.12)'%3E%3Cpath d='M400,20 C360,20 320,40 280,40 C240,40 200,20 160,20 C120,20 80,40 40,40 L40,60 C80,60 120,40 160,40 C200,40 240,60 280,60 C320,60 360,40 400,40 C440,40 480,60 520,60 C560,60 600,40 640,40 C680,40 720,60 760,60 L760,40 C720,40 680,20 640,20 C600,20 560,40 520,40 C480,40 440,20 400,20 Z M400,80 C360,80 320,100 280,100 C240,100 200,80 160,80 C120,80 80,100 40,100 L40,120 C80,120 120,100 160,100 C200,100 240,120 280,120 C320,120 360,100 400,100 C440,100 480,120 520,120 C560,120 600,100 640,100 C680,100 720,120 760,120 L760,100 C720,100 680,80 640,80 C600,80 560,100 520,100 C480,100 440,80 400,80 Z'/%3E%3Cpath d='M20,150 C60,130 100,140 140,150 C180,160 220,150 260,140 C300,130 340,140 380,150 C420,160 460,150 500,140 C540,130 580,140 620,150 C660,160 700,150 740,140 C780,130 820,140 860,150 L860,170 C820,160 780,150 740,160 C700,170 660,160 620,170 C580,180 540,170 500,160 C460,150 420,160 380,170 C340,180 300,170 260,160 C220,150 180,160 140,170 C100,180 60,170 20,170 L20,150 Z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 100% 100%;
+            background-color: rgba(255, 255, 255, 0.02);
         }
 
         .newspaper-title::before,
         .newspaper-title::after {
             content: '';
             position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80%;
-            height: 2px;
-            background: var(--text-color);
+            left: 0;
+            right: 0;
+            height: 4px;
+            background-image: linear-gradient(90deg,
+                transparent 0%,
+                transparent 15%,
+                var(--text-color) 30%,
+                var(--text-color) 70%,
+                transparent 85%,
+                transparent 100%
+            );
+            opacity: 0.8;
         }
 
         .newspaper-title::before {
-            top: 15px;
+            top: 0;
         }
 
         .newspaper-title::after {
-            bottom: 15px;
+            bottom: 0;
         }
 
         .newspaper-title h1 {
-            font-size: 3.5em;
+            font-size: 2.8em;
             font-weight: 900;
             margin: 0;
-            letter-spacing: 3px;
+            letter-spacing: 2px;
             text-transform: uppercase;
-            line-height: 1.1;
-            color: var(--text-color);
+            position: relative;
+            z-index: 1;
             text-shadow: 2px 2px 3px rgba(0, 0, 0, 0.1);
-            font-family: "Playfair Display", "Times New Roman", serif;
+            color: var(--text-color);
+            padding: 10px 0;
         }
 
         .newspaper-title .subtitle {
             font-style: italic;
-            font-size: 1.2em;
+            font-size: 1em;
             color: var(--text-color);
-            opacity: 0.85;
-            margin-top: 15px;
-            font-family: "Playfair Display", "Times New Roman", serif;
-            letter-spacing: 1px;
+            opacity: 0.8;
+            margin-top: 8px;
+            position: relative;
+            z-index: 1;
         }
 
         @media (max-width: 768px) {
-            .newspaper-title {
-                padding: 30px 15px;
-            }
-            
             .newspaper-title h1 {
-                font-size: 2.2em;
+                font-size: 2em;
             }
-            
-            .newspaper-title .subtitle {
-                font-size: 1em;
-            }
-            
-            .newspaper-title::before {
-                top: 10px;
-            }
-            
-            .newspaper-title::after {
-                bottom: 10px;
+            .newspaper-title {
+                background-size: 100% 100%;
+                padding: 20px 0;
             }
         }
     </style>
