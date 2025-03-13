@@ -747,22 +747,16 @@
             position: absolute;
             left: 0;
             right: 0;
-            height: 12px;
-            background-image: 
-                repeating-linear-gradient(90deg, 
-                    var(--text-color) 0px,
-                    var(--text-color) 4px,
-                    transparent 4px,
-                    transparent 20px
-                ),
-                repeating-linear-gradient(90deg, 
-                    var(--text-color) 0px,
-                    var(--text-color) 2px,
-                    transparent 2px,
-                    transparent 20px
-                );
-            background-position: 0 0, 0 6px;
-            background-repeat: repeat-x;
+            height: 4px;
+            background-image: linear-gradient(90deg,
+                transparent 0%,
+                transparent 15%,
+                var(--text-color) 30%,
+                var(--text-color) 70%,
+                transparent 85%,
+                transparent 100%
+            );
+            opacity: 0.8;
         }
 
         .newspaper-title::before {
@@ -771,51 +765,6 @@
 
         .newspaper-title::after {
             bottom: 0;
-        }
-
-        /* Add decorative column capitals */
-        .newspaper-title::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 15px;
-            background-image: 
-                radial-gradient(circle at 10px 15px, var(--text-color) 2px, transparent 3px),
-                radial-gradient(circle at 30px 15px, var(--text-color) 2px, transparent 3px),
-                radial-gradient(circle at 50px 15px, var(--text-color) 2px, transparent 3px),
-                linear-gradient(90deg, var(--text-color) 0px, var(--text-color) 2px, transparent 2px),
-                repeating-linear-gradient(90deg, 
-                    var(--text-color) 0px,
-                    var(--text-color) 4px,
-                    transparent 4px,
-                    transparent 20px
-                );
-            background-repeat: repeat-x;
-            background-position: 0 0, 0 0, 0 0, 0 0, 0 12px;
-        }
-
-        .newspaper-title::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 15px;
-            background-image: 
-                radial-gradient(circle at 10px 0px, var(--text-color) 2px, transparent 3px),
-                radial-gradient(circle at 30px 0px, var(--text-color) 2px, transparent 3px),
-                radial-gradient(circle at 50px 0px, var(--text-color) 2px, transparent 3px),
-                linear-gradient(90deg, var(--text-color) 0px, var(--text-color) 2px, transparent 2px),
-                repeating-linear-gradient(90deg, 
-                    var(--text-color) 0px,
-                    var(--text-color) 4px,
-                    transparent 4px,
-                    transparent 20px
-                );
-            background-repeat: repeat-x;
-            background-position: 0 0, 0 0, 0 0, 0 100%, 0 3px;
         }
 
         .newspaper-title h1 {
@@ -982,18 +931,6 @@
                 <button id="export-btn">Export Data</button>
                 <button id="import-btn">Import Data</button>
                 <input type="file" id="import-file" class="file-input" accept=".json">
-            </div>
-            <div id="monthly-container">
-                <h2>Monthly Overview</h2>
-                <div class="monthly-stats">
-                    <div class="chart-container">
-                        <canvas id="monthlyChart" style="width: 100%; height: 100%;"></canvas>
-                    </div>
-                    <div class="chart-container">
-                        <canvas id="categoryChart" style="width: 100%; height: 100%;"></canvas>
-                    </div>
-                </div>
-                <div class="monthly-view" id="monthly-view"></div>
             </div>
         </div>
     </div>
